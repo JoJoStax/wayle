@@ -244,28 +244,14 @@ impl Component for BatterySection {
                                 add_css_class: "charge-limit-title",
                                 set_halign: gtk::Align::Start,
                                 #[watch]
-                                set_label: &if model.charge_end_threshold == 0 {
-                                    t!("dropdown-battery-charge-limit-optimized")
-                                } else {
-                                    t!(
-                                        "dropdown-battery-limit-to",
-                                        threshold = model.charge_end_threshold.to_string()
-                                    )
-                                },
+                                set_label: &model.charge_limit_title(),
                             },
 
                             gtk::Label {
                                 add_css_class: "charge-limit-subtitle",
                                 set_halign: gtk::Align::Start,
                                 #[watch]
-                                set_label: &if model.charge_end_threshold == 0 {
-                                    t!("dropdown-battery-charge-limit-optimized-subtitle")
-                                } else {
-                                    t!(
-                                        "dropdown-battery-resumes-at",
-                                        threshold = model.resume_threshold().to_string()
-                                    )
-                                },
+                                set_label: &model.charge_limit_subtitle(),
                             },
                         },
 

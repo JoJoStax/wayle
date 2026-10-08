@@ -29,6 +29,9 @@ impl BatterySection {
         enabled: bool,
         sender: &ComponentSender<Self>,
     ) {
+        if self.charge_threshold_enabled == enabled {
+            return;
+        }
         self.charge_threshold_enabled = enabled;
         let battery = self.battery.clone();
 
@@ -135,5 +138,27 @@ impl BatterySection {
 
     pub(super) fn resume_threshold(&self) -> u32 {
         self.charge_end_threshold.saturating_sub(5)
+    }
+
+    pub(super) fn charge_limit_title(&self) -> String {
+        if self.charge_end_threshold == 0 {
+            t!("dropdown-battery-charge-limit-optimized")
+        } else {
+            t!(
+                "dropdown-battery-limit-to",
+                threshold = self.charge_end_threshold.to_string()
+            )
+        }
+    }
+
+    pub(super) fn charge_limit_subtitle(&self) -> String {
+        if self.charge_end_threshold == 0 {
+            t!("dropdown-battery-charge-limit-optimized-subtitle")
+        } else {
+            t!(
+                "dropdown-battery-resumes-at",
+                threshold = self.resume_threshold().to_string()
+            )
+        }
     }
 }
