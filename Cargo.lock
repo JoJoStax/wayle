@@ -4576,15 +4576,13 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zbus",
 ]
 
 [[package]]
 name = "wayle-battery"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a84c4e68a9846ac0ef9bc9582595480250bfd189be6b4857965a7843766b7bb3"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -4596,7 +4594,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2",
  "zbus",
 ]
 
@@ -4615,7 +4613,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zbus",
 ]
 
@@ -4634,7 +4632,7 @@ dependencies = [
  "tracing",
  "udev",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zbus",
 ]
 
@@ -4654,7 +4652,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4684,8 +4682,6 @@ dependencies = [
 [[package]]
 name = "wayle-core"
 version = "0.1.2"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "867109345d4043305fbee2df1847e8cd9ca33bac34550b541323fc17ae81e513"
 dependencies = [
  "futures",
  "schemars",
@@ -4727,7 +4723,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4791,7 +4787,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4813,7 +4809,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "wildcard",
  "zbus",
 ]
@@ -4835,7 +4831,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zbus",
 ]
 
@@ -4855,7 +4851,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -4878,7 +4874,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "wildcard",
  "zbus",
 ]
@@ -4899,7 +4895,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zbus",
 ]
 
@@ -5038,9 +5034,13 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zbus",
 ]
+
+[[package]]
+name = "wayle-traits"
+version = "0.1.2"
 
 [[package]]
 name = "wayle-traits"
@@ -5066,7 +5066,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "zbus",
 ]
 
@@ -5087,7 +5087,7 @@ dependencies = [
  "tokio-util",
  "tracing",
  "wayle-core",
- "wayle-traits",
+ "wayle-traits 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

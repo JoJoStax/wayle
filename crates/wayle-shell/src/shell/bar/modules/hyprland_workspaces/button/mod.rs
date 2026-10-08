@@ -29,6 +29,7 @@ pub(crate) struct ButtonBuildContext<'a> {
     pub is_active: bool,
     pub is_urgent: bool,
     pub is_vertical: bool,
+    pub active_window_address: Option<Address>,
 }
 
 #[derive(Debug, Clone)]
@@ -59,6 +60,7 @@ pub(crate) struct WorkspaceButtonInit {
     pub urgent_addresses: HashSet<Address>,
     pub empty_icon: String,
     pub icon_gap_px: i32,
+    pub active_window_address: Option<Address>,
 }
 
 pub(super) struct AppIcon {
@@ -70,6 +72,7 @@ pub(crate) struct WorkspaceButton {
     id: WorkspaceId,
     pub(super) state: WorkspaceState,
     pub(super) is_urgent: bool,
+    pub(super) active_window_address: Option<Address>,
     pub(super) css_id_class: String,
     pub(super) static_classes: Vec<&'static str>,
 
@@ -97,6 +100,7 @@ pub(crate) enum WorkspaceButtonInput {
         is_active: bool,
         is_urgent: bool,
         urgent_addresses: HashSet<Address>,
+        active_window_address: Option<Address>,
     },
 }
 
@@ -202,6 +206,7 @@ impl FactoryComponent for WorkspaceButton {
             initial_urgent_addrs: init.urgent_addresses,
             empty_icon: init.empty_icon,
             icon_gap_px: init.icon_gap_px,
+            active_window_address: init.active_window_address,
         }
     }
 
@@ -232,7 +237,8 @@ impl FactoryComponent for WorkspaceButton {
 
         self.populate_identity(&widgets.identity);
         let urgent_addrs = mem::take(&mut self.initial_urgent_addrs);
-        self.populate_app_icons(&widgets.app_icons_container, &urgent_addrs);
+        let active_addr = self.active_window_address.clone();
+        self.populate_app_icons(&widgets.app_icons_container, &urgent_addrs, active_addr.as_ref());
 
         widgets
     }
@@ -244,9 +250,12 @@ impl FactoryComponent for WorkspaceButton {
                 is_active,
                 is_urgent,
                 urgent_addresses,
+                active_window_address,
             } => {
                 self.state = determine_workspace_state(is_active, windows);
                 self.apply_urgency(is_urgent, &urgent_addresses);
+                self.active_window_address = active_window_address;
+                self.apply_active_window(self.active_window_address.as_ref());
             }
         }
     }
@@ -308,5 +317,6 @@ pub(crate) fn build_button_init(
         urgent_addresses,
         empty_icon: config.app_icons_empty.get(),
         icon_gap_px,
+        active_window_address: ctx.active_window_address.clone(),
     }
 }

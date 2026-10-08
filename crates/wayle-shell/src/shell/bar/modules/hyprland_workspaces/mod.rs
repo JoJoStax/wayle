@@ -50,6 +50,7 @@ pub(crate) struct HyprlandWorkspaces {
     config: Arc<ConfigService>,
     settings: BarSettings,
     active_workspace_id: WorkspaceId,
+    active_window_address: Option<Address>,
     focused_monitor: Option<String>,
     workspace_monitor_rules: HashMap<WorkspaceId, String>,
     urgent_windows: HashSet<Address>,
@@ -90,6 +91,7 @@ impl Component for HyprlandWorkspaces {
 
         let active_id =
             Self::initial_active_workspace(&init.hyprland, &init.settings, monitor_specific);
+        let active_window_address = Self::initial_active_window(&init.hyprland);
         let focused_monitor = Self::initial_focused_monitor(&init.hyprland);
         let bar_scale = config.bar.scale.clone();
 
@@ -125,6 +127,7 @@ impl Component for HyprlandWorkspaces {
             config: init.config,
             settings: init.settings,
             active_workspace_id: active_id,
+            active_window_address,
             focused_monitor,
             workspace_monitor_rules: HashMap::new(),
             urgent_windows: HashSet::new(),
@@ -173,6 +176,12 @@ impl Component for HyprlandWorkspaces {
                     self.stop_blink_timer();
                 }
 
+                if let Some(hyprland) = &self.hyprland {
+                    let runtime = tokio::runtime::Handle::current();
+                    self.active_window_address =
+                        runtime.block_on(hyprland.active_window()).map(|c| c.address.get());
+                }
+
                 self.rebuild_buttons();
                 force_window_resize(root);
             }
@@ -192,6 +201,11 @@ impl Component for HyprlandWorkspaces {
                 self.clear_urgent_windows_for_workspace(id);
                 self.stop_blink_if_no_urgent();
                 self.active_workspace_id = id;
+                if let Some(hyprland) = &self.hyprland {
+                    let runtime = tokio::runtime::Handle::current();
+                    self.active_window_address =
+                        runtime.block_on(hyprland.active_window()).map(|c| c.address.get());
+                }
                 self.sync_after_active_workspace_change(has_min_workspace_count);
             }
 
@@ -214,6 +228,11 @@ impl Component for HyprlandWorkspaces {
                     self.clear_urgent_windows_for_workspace(workspace_id);
                     self.stop_blink_if_no_urgent();
                     self.active_workspace_id = workspace_id;
+                    if let Some(hyprland) = &self.hyprland {
+                        let runtime = tokio::runtime::Handle::current();
+                        self.active_window_address =
+                            runtime.block_on(hyprland.active_window()).map(|c| c.address.get());
+                    }
                     self.sync_after_active_workspace_change(has_min_workspace_count);
                 }
             }
@@ -233,9 +252,8 @@ impl Component for HyprlandWorkspaces {
             }
 
             WorkspacesCmd::WindowFocused(address) => {
-                if !self.urgent_windows.remove(&address) {
-                    return;
-                }
+                self.active_window_address = Some(address.clone());
+                self.urgent_windows.remove(&address);
 
                 if self.urgent_windows.is_empty() {
                     self.stop_blink_timer();

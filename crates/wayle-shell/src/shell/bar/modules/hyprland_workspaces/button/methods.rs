@@ -138,6 +138,7 @@ impl WorkspaceButton {
         &mut self,
         container: &gtk::Box,
         urgent_addresses: &HashSet<Address>,
+        active_window_address: Option<&Address>,
     ) {
         if self.app_icon_inits.is_empty() {
             let image = gtk::Image::builder()
@@ -162,11 +163,28 @@ impl WorkspaceButton {
             if is_urgent {
                 image.add_css_class("urgent");
             }
+            let is_active = active_window_address
+                .is_some_and(|active| init.addresses.contains(active));
+            if is_active {
+                image.add_css_class("active");
+            }
             container.append(&image);
             self.app_icons.push(AppIcon {
                 addresses: init.addresses,
                 widget: image,
             });
+        }
+    }
+
+    pub(super) fn apply_active_window(&self, active_address: Option<&Address>) {
+        for app_icon in &self.app_icons {
+            let is_active = active_address
+                .is_some_and(|active| app_icon.addresses.contains(active));
+            if is_active {
+                app_icon.widget.add_css_class("active");
+            } else {
+                app_icon.widget.remove_css_class("active");
+            }
         }
     }
 }

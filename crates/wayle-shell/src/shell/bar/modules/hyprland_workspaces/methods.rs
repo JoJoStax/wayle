@@ -134,6 +134,14 @@ impl HyprlandWorkspaces {
         }
     }
 
+    pub(super) fn initial_active_window(
+        hyprland: &Option<Arc<HyprlandService>>,
+    ) -> Option<Address> {
+        let hyprland = hyprland.as_ref()?;
+        let runtime = tokio::runtime::Handle::current();
+        runtime.block_on(hyprland.active_window()).map(|c| c.address.get())
+    }
+
     pub(super) fn should_apply_workspace_event(&self) -> bool {
         let Some(bar_monitor) = self.settings.monitor_name.as_ref() else {
             return true;
@@ -247,6 +255,7 @@ impl HyprlandWorkspaces {
                     is_active: ws.id == self.active_workspace_id,
                     is_urgent,
                     is_vertical,
+                    active_window_address: self.active_window_address.clone(),
                 };
                 build_button_init(&ctx, ws_config, &clients, urgent_addrs)
             })
@@ -323,6 +332,7 @@ impl HyprlandWorkspaces {
                     is_active: button_id == self.active_workspace_id,
                     is_urgent,
                     urgent_addresses: urgent_addrs,
+                    active_window_address: self.active_window_address.clone(),
                 },
             );
         }

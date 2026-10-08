@@ -145,3 +145,7 @@ unsafe_code = "deny"
 [profile.release]
 lto = true
 codegen-units = 1
+
+[patch.crates-io]
+wayle-battery = { path = "../wayle-services/wayle-battery" }
+wayle-core = { path = "../wayle-services/wayle-core" }
