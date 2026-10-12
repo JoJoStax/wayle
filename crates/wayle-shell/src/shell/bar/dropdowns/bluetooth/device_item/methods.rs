@@ -18,6 +18,7 @@ impl DeviceItem {
             || self.connected != snapshot.connected
             || self.paired != snapshot.paired
             || self.category != snapshot.category
+            || self.codec != snapshot.codec
             || self.battery_icon != snapshot.battery.map(battery_level_icon)
             || self.battery_text
                 != snapshot
@@ -40,6 +41,7 @@ impl DeviceItem {
 
         self.name = snapshot.name;
         self.device_type = td!(snapshot.device_type_key);
+        self.codec = snapshot.codec;
         self.battery_text = snapshot
             .battery
             .map(|percent| t!("dropdown-bluetooth-battery", percent = percent));

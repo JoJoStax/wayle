@@ -12,9 +12,16 @@ impl VolumeModule {
     pub(super) fn update_display(&self, config: &VolumeConfig, device: &OutputDevice) {
         let percentage = device.volume.get().average_percentage().round() as u16;
         let muted = device.muted.get();
+        let codec = crate::shell::bar::dropdowns::audio::helpers::extract_bluetooth_codec(&device.properties.get());
 
-        let label = format_label(&config.format.get(), percentage);
+        let label = format_label(&config.format.get(), percentage, codec.as_deref());
         self.bar_button.emit(BarButtonInput::SetLabel(label));
+
+        let tooltip = match codec {
+            Some(ref c) => Some(format!("{} ({}) - {}%", device.description.get(), c, percentage)),
+            None => Some(format!("{} - {}%", device.description.get(), percentage)),
+        };
+        self.bar_button.emit(BarButtonInput::SetTooltip(tooltip));
 
         let icons = config.level_icons.get();
         let muted_icon_val = config.icon_muted.get();

@@ -1,4 +1,4 @@
-mod audio;
+pub(crate) mod audio;
 mod battery;
 mod bluetooth;
 mod brightness;

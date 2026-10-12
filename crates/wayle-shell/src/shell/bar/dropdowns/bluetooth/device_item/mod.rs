@@ -18,6 +18,7 @@ const HOVER_TRANSITION_MS: u32 = 150;
 pub(crate) struct DeviceItem {
     name: String,
     device_type: String,
+    pub(crate) codec: Option<String>,
     battery_text: Option<String>,
     battery_icon: Option<&'static str>,
     icon: &'static str,
@@ -105,6 +106,30 @@ impl FactoryComponent for DeviceItem {
                             "bluetooth-device-detail",
                         #[watch]
                         set_label: &self.device_type,
+                    },
+
+                    #[name = "codec_separator"]
+                    gtk::Label {
+                        add_css_class:
+                            "bluetooth-detail-separator",
+                        set_label: DETAIL_SEPARATOR,
+                        #[watch]
+                        set_visible:
+                            self.codec.is_some(),
+                    },
+
+                    #[name = "codec_label"]
+                    gtk::Label {
+                        add_css_class:
+                            "bluetooth-device-detail bluetooth-device-codec",
+                        #[watch]
+                        set_visible:
+                            self.codec.is_some(),
+                        #[watch]
+                        set_label:
+                            self.codec
+                                .as_deref()
+                                .unwrap_or_default(),
                     },
 
                     #[name = "battery_separator"]
@@ -243,6 +268,7 @@ impl FactoryComponent for DeviceItem {
         Self {
             name: snapshot.name,
             device_type,
+            codec: snapshot.codec,
             battery_text,
             battery_icon,
             icon: snapshot.icon,

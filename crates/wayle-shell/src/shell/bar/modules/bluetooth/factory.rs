@@ -24,6 +24,7 @@ impl ModuleFactory for Factory {
         let init = BluetoothInit {
             settings: settings.clone(),
             bluetooth: services.bluetooth.clone(),
+            audio: services.audio.clone(),
             config: services.config.clone(),
             dropdowns: dropdowns.clone(),
         };

@@ -60,6 +60,16 @@ image.audio-device-icon-img {
     }
 }
 
+.audio-device-codec {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    padding: 1px var(--space-xs);
+    border-radius: var(--rounding-element);
+    background: var(--bg-overlay);
+    color: var(--fg-muted);
+    border: 1px solid var(--border-subtle);
+}
+
 .audio-device-chevron {
     -gtk-icon-size: var(--icon-sm);
     color: var(--fg-subtle);

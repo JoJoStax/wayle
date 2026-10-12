@@ -169,6 +169,71 @@ pub(crate) fn active_port_description(
         .map(|port| port.description.clone())
 }
 
+/// Formats a raw bluetooth audio codec identifier into its standard display name.
+pub(crate) fn format_bluetooth_codec(raw: &str) -> String {
+    match raw.to_ascii_lowercase().as_str() {
+        "ldac" => "LDAC".into(),
+        "aac" => "AAC".into(),
+        "sbc" => "SBC".into(),
+        "sbc_xq" | "sbc-xq" => "SBC-XQ".into(),
+        "aptx" => "aptX".into(),
+        "aptx_hd" | "aptx-hd" => "aptX HD".into(),
+        "aptx_adaptive" | "aptx-adaptive" => "aptX Adaptive".into(),
+        "aptx_ll" | "aptx-ll" => "aptX LL".into(),
+        "lc3" => "LC3".into(),
+        "opus" | "opus_0" => "Opus".into(),
+        _ => raw.to_uppercase(),
+    }
+}
+
+/// Extracts and formats the active bluetooth audio codec from device properties, if present.
+pub(crate) fn extract_bluetooth_codec(props: &HashMap<String, String>) -> Option<String> {
+    props
+        .get("api.bluez5.codec")
+        .or_else(|| props.get("bluetooth.codec"))
+        .map(|codec| format_bluetooth_codec(codec))
+}
+
+/// Finds the active audio codec for a Bluetooth device by matching its address or object path
+/// against the PulseAudio/PipeWire sink or source properties.
+pub(crate) fn find_bluetooth_device_codec(
+    audio: &wayle_audio::AudioService,
+    device_address: &str,
+    device_path: Option<&str>,
+) -> Option<String> {
+    for output in &audio.output_devices.get() {
+        let props = output.properties.get();
+        let matches_address = props
+            .get("api.bluez5.address")
+            .or_else(|| props.get("device.string"))
+            .is_some_and(|addr| addr.eq_ignore_ascii_case(device_address));
+        let matches_path = device_path.is_some_and(|dp| {
+            props.get("api.bluez5.path").is_some_and(|p| p == dp)
+        });
+        if matches_address || matches_path {
+            if let Some(codec) = extract_bluetooth_codec(&props) {
+                return Some(codec);
+            }
+        }
+    }
+    for input in &audio.input_devices.get() {
+        let props = input.properties.get();
+        let matches_address = props
+            .get("api.bluez5.address")
+            .or_else(|| props.get("device.string"))
+            .is_some_and(|addr| addr.eq_ignore_ascii_case(device_address));
+        let matches_path = device_path.is_some_and(|dp| {
+            props.get("api.bluez5.path").is_some_and(|p| p == dp)
+        });
+        if matches_address || matches_path {
+            if let Some(codec) = extract_bluetooth_codec(&props) {
+                return Some(codec);
+            }
+        }
+    }
+    None
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -405,5 +470,33 @@ mod tests {
             input_device_icon("alsa_input.pci", "Built-in Audio", &props),
             DEFAULT_INPUT_ICON
         );
+    }
+
+    #[test]
+    fn format_bluetooth_codecs() {
+        assert_eq!(format_bluetooth_codec("ldac"), "LDAC");
+        assert_eq!(format_bluetooth_codec("aac"), "AAC");
+        assert_eq!(format_bluetooth_codec("sbc"), "SBC");
+        assert_eq!(format_bluetooth_codec("sbc_xq"), "SBC-XQ");
+        assert_eq!(format_bluetooth_codec("aptx"), "aptX");
+        assert_eq!(format_bluetooth_codec("aptx_hd"), "aptX HD");
+        assert_eq!(format_bluetooth_codec("aptx_adaptive"), "aptX Adaptive");
+        assert_eq!(format_bluetooth_codec("lc3"), "LC3");
+        assert_eq!(format_bluetooth_codec("opus"), "Opus");
+        assert_eq!(format_bluetooth_codec("custom"), "CUSTOM");
+    }
+
+    #[test]
+    fn extract_bluetooth_codec_from_props() {
+        let mut props = HashMap::new();
+        props.insert("api.bluez5.codec".into(), "ldac".into());
+        assert_eq!(extract_bluetooth_codec(&props), Some("LDAC".into()));
+
+        let mut props2 = HashMap::new();
+        props2.insert("bluetooth.codec".into(), "aptx_hd".into());
+        assert_eq!(extract_bluetooth_codec(&props2), Some("aptX HD".into()));
+
+        let empty = HashMap::new();
+        assert_eq!(extract_bluetooth_codec(&empty), None);
     }
 }

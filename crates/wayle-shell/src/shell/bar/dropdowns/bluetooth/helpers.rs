@@ -335,6 +335,7 @@ pub(crate) struct DeviceSnapshot {
     pub name: String,
     pub icon: &'static str,
     pub device_type_key: &'static str,
+    pub codec: Option<String>,
     pub battery: Option<u8>,
     pub connected: bool,
     pub paired: bool,
@@ -342,7 +343,10 @@ pub(crate) struct DeviceSnapshot {
     pub device: Arc<Device>,
 }
 
-pub(crate) fn categorize_device(device: &Arc<Device>) -> Option<DeviceSnapshot> {
+pub(crate) fn categorize_device(
+    device: &Arc<Device>,
+    audio: Option<&wayle_audio::AudioService>,
+) -> Option<DeviceSnapshot> {
     let connected = device.connected.get();
     let paired = device.paired.get();
 
@@ -366,10 +370,23 @@ pub(crate) fn categorize_device(device: &Arc<Device>) -> Option<DeviceSnapshot> 
     let icon_hint = device.icon.get();
     let class = device.class.get();
 
+    let codec = if connected {
+        audio.and_then(|a| {
+            crate::shell::bar::dropdowns::audio::helpers::find_bluetooth_device_codec(
+                a,
+                &device.address.get(),
+                Some(device.object_path.as_str()),
+            )
+        })
+    } else {
+        None
+    };
+
     Some(DeviceSnapshot {
         name,
         icon: device_icon(icon_hint.as_deref(), class),
         device_type_key: device_type_key(icon_hint.as_deref(), class),
+        codec,
         battery: device.battery_percentage.get(),
         connected,
         paired,
@@ -383,12 +400,15 @@ pub(crate) struct SplitDeviceLists {
     pub available_devices: Vec<DeviceSnapshot>,
 }
 
-pub(crate) fn build_split_device_lists(devices: &[Arc<Device>]) -> SplitDeviceLists {
+pub(crate) fn build_split_device_lists(
+    devices: &[Arc<Device>],
+    audio: Option<&wayle_audio::AudioService>,
+) -> SplitDeviceLists {
     let mut my_devices = Vec::new();
     let mut available_devices = Vec::new();
 
     for device in devices {
-        let Some(snapshot) = categorize_device(device) else {
+        let Some(snapshot) = categorize_device(device, audio) else {
             continue;
         };
         match snapshot.category {

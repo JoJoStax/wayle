@@ -7,6 +7,7 @@ use zbus::zvariant::OwnedObjectPath;
 
 pub(crate) struct BluetoothDropdownInit {
     pub bluetooth: DeferredService<BluetoothService>,
+    pub audio: Option<Arc<wayle_audio::AudioService>>,
     pub config: Arc<ConfigService>,
 }
 

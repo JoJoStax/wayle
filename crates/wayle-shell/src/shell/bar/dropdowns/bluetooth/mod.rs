@@ -28,6 +28,7 @@ const ACTION_TIMEOUT: Duration = Duration::from_secs(30);
 
 pub(crate) struct BluetoothDropdown {
     bluetooth: Option<Arc<BluetoothService>>,
+    audio: Option<Arc<wayle_audio::AudioService>>,
     scaled_width: i32,
     scaled_height: i32,
     enabled: bool,
@@ -343,9 +344,13 @@ impl Component for BluetoothDropdown {
 
         watchers::spawn_config_watcher(&sender, &init.config);
         watchers::spawn_service_watcher(&sender, &init.bluetooth);
+        if let Some(ref audio) = init.audio {
+            watchers::spawn_audio_watcher(&sender, audio);
+        }
 
         let model = Self {
             bluetooth: None,
+            audio: init.audio,
             scaled_width: scaled_dimension(BASE_WIDTH, scale),
             scaled_height: scaled_dimension(BASE_HEIGHT, scale),
             enabled: false,

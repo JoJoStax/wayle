@@ -74,20 +74,30 @@ pub(super) fn build_output_device_list(
 ) -> Vec<DeviceInfo> {
     devices
         .iter()
-        .map(|device| DeviceInfo {
-            description: device.description.get(),
-            subtitle: helpers::active_port_description(
+        .map(|device| {
+            let port = helpers::active_port_description(
                 &device.active_port.get(),
                 &device.ports.get(),
-            ),
-            icon: helpers::output_device_icon(
-                &device.name.get(),
-                &device.description.get(),
-                &device.properties.get(),
-            ),
-            is_active: default
-                .as_ref()
-                .is_some_and(|default_device| default_device.key == device.key),
+            );
+            let codec = helpers::extract_bluetooth_codec(&device.properties.get());
+            let subtitle = match (codec, port) {
+                (Some(c), Some(p)) => Some(format!("{c} • {p}")),
+                (Some(c), None) => Some(c),
+                (None, p) => p,
+            };
+
+            DeviceInfo {
+                description: device.description.get(),
+                subtitle,
+                icon: helpers::output_device_icon(
+                    &device.name.get(),
+                    &device.description.get(),
+                    &device.properties.get(),
+                ),
+                is_active: default
+                    .as_ref()
+                    .is_some_and(|default_device| default_device.key == device.key),
+            }
         })
         .collect()
 }
@@ -99,20 +109,30 @@ pub(super) fn build_input_device_list(
     devices
         .iter()
         .filter(|device| !device.is_monitor.get())
-        .map(|device| DeviceInfo {
-            description: device.description.get(),
-            subtitle: helpers::active_port_description(
+        .map(|device| {
+            let port = helpers::active_port_description(
                 &device.active_port.get(),
                 &device.ports.get(),
-            ),
-            icon: helpers::input_device_icon(
-                &device.name.get(),
-                &device.description.get(),
-                &device.properties.get(),
-            ),
-            is_active: default
-                .as_ref()
-                .is_some_and(|default_device| default_device.key == device.key),
+            );
+            let codec = helpers::extract_bluetooth_codec(&device.properties.get());
+            let subtitle = match (codec, port) {
+                (Some(c), Some(p)) => Some(format!("{c} • {p}")),
+                (Some(c), None) => Some(c),
+                (None, p) => p,
+            };
+
+            DeviceInfo {
+                description: device.description.get(),
+                subtitle,
+                icon: helpers::input_device_icon(
+                    &device.name.get(),
+                    &device.description.get(),
+                    &device.properties.get(),
+                ),
+                is_active: default
+                    .as_ref()
+                    .is_some_and(|default_device| default_device.key == device.key),
+            }
         })
         .collect()
 }

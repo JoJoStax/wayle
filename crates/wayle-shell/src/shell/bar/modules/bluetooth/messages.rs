@@ -10,6 +10,7 @@ use crate::shell::bar::dropdowns::DropdownRegistry;
 pub(crate) struct BluetoothInit {
     pub settings: BarSettings,
     pub bluetooth: DeferredService<BluetoothService>,
+    pub audio: Option<Arc<wayle_audio::AudioService>>,
     pub config: Arc<ConfigService>,
     pub dropdowns: Rc<DropdownRegistry>,
 }

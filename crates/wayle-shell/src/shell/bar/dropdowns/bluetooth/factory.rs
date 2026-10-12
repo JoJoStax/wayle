@@ -12,6 +12,7 @@ impl DropdownFactory for Factory {
     fn create(services: &ShellServices) -> Option<DropdownInstance> {
         let init = BluetoothDropdownInit {
             bluetooth: services.bluetooth.clone(),
+            audio: services.audio.clone(),
             config: services.config.clone(),
         };
         let controller = BluetoothDropdown::builder().launch(init).detach();

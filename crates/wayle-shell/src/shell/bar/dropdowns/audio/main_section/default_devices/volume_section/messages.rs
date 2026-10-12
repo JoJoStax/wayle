@@ -66,6 +66,13 @@ impl ActiveDevice {
         }
     }
 
+    pub fn codec(&self) -> Option<String> {
+        match self {
+            Self::Output(device) => helpers::extract_bluetooth_codec(&device.properties.get()),
+            Self::Input(device) => helpers::extract_bluetooth_codec(&device.properties.get()),
+        }
+    }
+
     pub fn trigger_icon(&self) -> &'static str {
         match self {
             Self::Output(device) => helpers::output_device_icon(

@@ -77,10 +77,12 @@ pub struct VolumeConfig {
     /// ## Placeholders
     ///
     /// - `{{ percent }}` - Volume (0-100)
+    /// - `{{ codec }}` - Bluetooth audio codec if connected (e.g. "LDAC", "AAC", or "")
     ///
     /// ## Examples
     ///
     /// - `"{{ percent }}%"` - "45%"
+    /// - `"{{ percent }}% {{ codec }}"` - "45% LDAC"
     #[serde(rename = "format")]
     #[default(String::from("{{ percent }}%"))]
     pub format: ConfigProperty<String>,

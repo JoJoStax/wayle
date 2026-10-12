@@ -86,3 +86,14 @@ pub(super) fn spawn_device_watchers(
         );
     }
 }
+
+pub(super) fn spawn_audio_watcher(
+    sender: &ComponentSender<BluetoothDropdown>,
+    audio: &Arc<wayle_audio::AudioService>,
+) {
+    let output_devices = audio.output_devices.clone();
+    let default_output = audio.default_output.clone();
+    watch!(sender, [output_devices.watch(), default_output.watch()], |out| {
+        let _ = out.send(BluetoothDropdownCmd::DevicePropertyChanged);
+    });
+}

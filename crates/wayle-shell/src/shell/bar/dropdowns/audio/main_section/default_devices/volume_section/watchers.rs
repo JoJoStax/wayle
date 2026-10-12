@@ -59,11 +59,12 @@ pub(super) fn spawn_device(
         ActiveDevice::Output(d) => {
             let volume = d.volume.clone();
             let muted = d.muted.clone();
+            let properties = d.properties.clone();
             watch_cancellable_throttled!(
                 sender,
                 token,
                 VOLUME_THROTTLE,
-                [volume.watch(), muted.watch()],
+                [volume.watch(), muted.watch(), properties.watch()],
                 |out| {
                     let _ = out.send(VolumeSectionCmd::VolumeOrMuteChanged);
                 }
@@ -72,11 +73,12 @@ pub(super) fn spawn_device(
         ActiveDevice::Input(d) => {
             let volume = d.volume.clone();
             let muted = d.muted.clone();
+            let properties = d.properties.clone();
             watch_cancellable_throttled!(
                 sender,
                 token,
                 VOLUME_THROTTLE,
-                [volume.watch(), muted.watch()],
+                [volume.watch(), muted.watch(), properties.watch()],
                 |out| {
                     let _ = out.send(VolumeSectionCmd::VolumeOrMuteChanged);
                 }

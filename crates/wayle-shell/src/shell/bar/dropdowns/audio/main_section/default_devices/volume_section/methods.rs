@@ -30,6 +30,7 @@ impl VolumeSection {
 
     pub(super) fn sync_from_device(&mut self, device: &ActiveDevice) {
         self.device_name = device.description();
+        self.device_codec = device.codec();
         self.device_icon = device.trigger_icon();
         self.slider.set_value(device.volume_percentage());
         self.muted = device.muted();

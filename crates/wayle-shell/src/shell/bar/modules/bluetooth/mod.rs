@@ -27,6 +27,7 @@ pub(crate) struct BluetoothModule {
     state_watcher: WatcherToken,
     adapter_watcher: WatcherToken,
     bluetooth: DeferredService<BluetoothService>,
+    audio: Option<Arc<wayle_audio::AudioService>>,
     config: Arc<ConfigService>,
     dropdowns: Rc<DropdownRegistry>,
 }
@@ -55,13 +56,14 @@ impl Component for BluetoothModule {
         let config = init.config.config();
         let bt_config = &config.modules.bluetooth;
 
-        let (initial_icon, initial_label) = Self::compute_display(bt_config, &init.bluetooth.get());
+        let (initial_icon, initial_label, initial_tooltip) =
+            Self::compute_display(bt_config, &init.bluetooth.get(), &init.audio);
 
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
                 icon: initial_icon,
                 label: initial_label,
-                tooltip: None,
+                tooltip: initial_tooltip,
                 colors: BarButtonColors {
                     icon_color: bt_config.icon_color.clone(),
                     label_color: bt_config.label_color.clone(),
@@ -88,6 +90,9 @@ impl Component for BluetoothModule {
             });
 
         watchers::spawn_service_watcher(&sender, &init.bluetooth);
+        if let Some(ref audio) = init.audio {
+            watchers::spawn_audio_watcher(&sender, audio);
+        }
         let adapter_watcher = WatcherToken::new();
         let state_watcher = WatcherToken::new();
 
@@ -96,6 +101,7 @@ impl Component for BluetoothModule {
             state_watcher,
             adapter_watcher,
             bluetooth: init.bluetooth,
+            audio: init.audio,
             config: init.config,
             dropdowns: init.dropdowns,
         };

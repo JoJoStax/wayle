@@ -10,6 +10,7 @@ pub(crate) struct BluetoothContext<'a> {
     pub(crate) enabled: bool,
     pub(crate) discovering: bool,
     pub(crate) connected_devices: &'a [Arc<Device>],
+    pub(crate) codec: Option<String>,
 }
 
 pub(crate) fn select_icon(config: &BluetoothConfig, ctx: &BluetoothContext<'_>) -> String {
@@ -35,8 +36,34 @@ pub(crate) fn format_label(ctx: &BluetoothContext<'_>) -> String {
 
     match ctx.connected_devices.len() {
         0 => t!("bar-bluetooth-disconnected"),
-        1 => ctx.connected_devices[0].alias.get(),
+        1 => {
+            let alias = ctx.connected_devices[0].alias.get();
+            if let Some(ref codec) = ctx.codec {
+                format!("{alias} ({codec})")
+            } else {
+                alias
+            }
+        }
         n => t!("bar-bluetooth-connected-count", count = n),
+    }
+}
+
+pub(crate) fn format_tooltip(ctx: &BluetoothContext<'_>) -> Option<String> {
+    if !ctx.available || !ctx.enabled {
+        return Some(t!("bar-bluetooth-disabled"));
+    }
+
+    match ctx.connected_devices.len() {
+        0 => Some(t!("bar-bluetooth-disconnected")),
+        1 => {
+            let alias = ctx.connected_devices[0].alias.get();
+            if let Some(ref codec) = ctx.codec {
+                Some(format!("{alias} ({codec})"))
+            } else {
+                Some(alias)
+            }
+        }
+        n => Some(t!("bar-bluetooth-connected-count", count = n)),
     }
 }
 
@@ -56,6 +83,7 @@ mod tests {
             enabled: true,
             discovering: false,
             connected_devices: &[],
+            codec: None,
         };
         assert_eq!(select_icon(&config, &ctx), config.disabled_icon.get());
     }
@@ -68,6 +96,7 @@ mod tests {
             enabled: false,
             discovering: false,
             connected_devices: &[],
+            codec: None,
         };
         assert_eq!(select_icon(&config, &ctx), config.disabled_icon.get());
     }
@@ -80,6 +109,7 @@ mod tests {
             enabled: true,
             discovering: true,
             connected_devices: &[],
+            codec: None,
         };
         assert_eq!(select_icon(&config, &ctx), config.searching_icon.get());
     }
@@ -92,6 +122,7 @@ mod tests {
             enabled: true,
             discovering: false,
             connected_devices: &[],
+            codec: None,
         };
         assert_eq!(select_icon(&config, &ctx), config.disconnected_icon.get());
     }
@@ -103,6 +134,7 @@ mod tests {
             enabled: false,
             discovering: false,
             connected_devices: &[],
+            codec: None,
         };
         assert!(!format_label(&ctx).is_empty());
     }
@@ -114,6 +146,7 @@ mod tests {
             enabled: true,
             discovering: false,
             connected_devices: &[],
+            codec: None,
         };
         assert!(!format_label(&ctx).is_empty());
     }

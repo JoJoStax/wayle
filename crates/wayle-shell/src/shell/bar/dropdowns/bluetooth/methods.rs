@@ -93,7 +93,7 @@ impl BluetoothDropdown {
         };
 
         let devices = bluetooth.devices.get();
-        let lists = build_split_device_lists(&devices);
+        let lists = build_split_device_lists(&devices, self.audio.as_deref());
 
         reconcile_list(&mut self.my_devices.guard(), &lists.my_devices);
         reconcile_list(

@@ -62,11 +62,25 @@ impl Component for VolumeModule {
             .cloned()
             .unwrap_or_default();
 
+        let initial_device = init.audio.default_output.get();
+        let (initial_label, initial_tooltip) = if let Some(ref dev) = initial_device {
+            let pct = dev.volume.get().average_percentage().round() as u16;
+            let codec = crate::shell::bar::dropdowns::audio::helpers::extract_bluetooth_codec(&dev.properties.get());
+            let label = helpers::format_label(&volume_config.format.get(), pct, codec.as_deref());
+            let tip = match codec {
+                Some(ref c) => Some(format!("{} ({}) - {}%", dev.description.get(), c, pct)),
+                None => Some(format!("{} - {}%", dev.description.get(), pct)),
+            };
+            (label, tip)
+        } else {
+            (String::from("--%"), None)
+        };
+
         let bar_button = BarButton::builder()
             .launch(BarButtonInit {
                 icon: initial_icon,
-                label: String::from("--%"),
-                tooltip: None,
+                label: initial_label,
+                tooltip: initial_tooltip,
                 colors: BarButtonColors {
                     icon_color: volume_config.icon_color.clone(),
                     label_color: volume_config.label_color.clone(),
@@ -132,6 +146,10 @@ impl Component for VolumeModule {
 
                     let token = self.active_device_watcher_token.reset();
                     watchers::spawn_device_watchers(&sender, &device, token);
+                } else {
+                    self.bar_button
+                        .emit(BarButtonInput::SetLabel(String::from("--%")));
+                    self.bar_button.emit(BarButtonInput::SetTooltip(None));
                 }
             }
             VolumeCmd::VolumeOrMuteChanged | VolumeCmd::ConfigChanged => {

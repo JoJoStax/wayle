@@ -79,3 +79,14 @@ pub(super) fn spawn_adapter_watchers(
         });
     }
 }
+
+pub(super) fn spawn_audio_watcher(
+    sender: &ComponentSender<BluetoothModule>,
+    audio: &Arc<wayle_audio::AudioService>,
+) {
+    let output_devices = audio.output_devices.clone();
+    let default_output = audio.default_output.clone();
+    wayle_widgets::watch!(sender, [output_devices.watch(), default_output.watch()], |out| {
+        let _ = out.send(BluetoothCmd::StateChanged);
+    });
+}

@@ -17,6 +17,7 @@ pub(crate) struct VolumeSection {
     kind: VolumeSectionKind,
     device: Option<ActiveDevice>,
     device_name: String,
+    device_codec: Option<String>,
     device_icon: &'static str,
     muted: bool,
     has_device: bool,
@@ -75,12 +76,21 @@ impl Component for VolumeSection {
 
                         gtk::Box {
                             add_css_class: "audio-device-name",
+                            set_valign: gtk::Align::Center,
 
                             gtk::Label {
                                 add_css_class: "audio-device-name-text",
                                 set_ellipsize: gtk::pango::EllipsizeMode::End,
                                 #[watch]
                                 set_label: &model.device_name,
+                            },
+
+                            gtk::Label {
+                                add_css_class: "audio-device-codec",
+                                #[watch]
+                                set_visible: model.device_codec.is_some(),
+                                #[watch]
+                                set_label: model.device_codec.as_deref().unwrap_or_default(),
                             },
 
                             gtk::Image {
@@ -151,11 +161,12 @@ impl Component for VolumeSection {
                 .map(ActiveDevice::Input),
         };
 
-        let (device_name, device_icon, volume, muted) = default_device
+        let (device_name, device_codec, device_icon, volume, muted) = default_device
             .as_ref()
             .map(|device| {
                 (
                     device.description(),
+                    device.codec(),
                     device.trigger_icon(),
                     device.volume_percentage(),
                     device.muted(),
@@ -197,6 +208,7 @@ impl Component for VolumeSection {
             kind: init.kind,
             device: default_device,
             device_name,
+            device_codec,
             device_icon,
             muted,
             has_device,

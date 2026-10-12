@@ -83,6 +83,16 @@
     color: var(--fg-subtle);
 }
 
+.bluetooth-device-codec {
+    font-size: var(--text-xs);
+    font-weight: var(--weight-bold);
+    padding: 1px var(--space-xs);
+    border-radius: var(--rounding-element);
+    background: var(--bg-overlay);
+    color: var(--fg-muted);
+    border: 1px solid var(--border-subtle);
+}
+
 .bluetooth-hover-stack {
     margin-left: var(--space-xs);
 }

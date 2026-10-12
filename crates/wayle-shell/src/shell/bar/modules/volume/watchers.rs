@@ -49,11 +49,12 @@ pub(super) fn spawn_device_watchers(
 ) {
     let volume = device.volume.clone();
     let muted = device.muted.clone();
+    let properties = device.properties.clone();
     watch_cancellable_throttled!(
         sender,
         token,
         VOLUME_THROTTLE,
-        [volume.watch(), muted.watch()],
+        [volume.watch(), muted.watch(), properties.watch()],
         |out| {
             let _ = out.send(VolumeCmd::VolumeOrMuteChanged);
         }
