@@ -11,3 +11,4 @@ dropdown-audio-no-devices-title = Aucun périphérique audio
 dropdown-audio-no-devices-description = Aucun périphérique de sortie ou d'entrée audio trouvé
 dropdown-audio-no-apps = Aucune application ne lit de l'audio
 dropdown-audio-settings = Paramètres audio
+dropdown-audio-codecs = Codecs audio

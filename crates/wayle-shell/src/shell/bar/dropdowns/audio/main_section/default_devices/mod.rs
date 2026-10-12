@@ -84,6 +84,15 @@ impl SimpleComponent for DefaultDevices {
                 VolumeSectionOutput::ShowDevices => {
                     let _ = sender.output(DefaultDevicesOutput::ShowOutputDevices);
                 }
+                VolumeSectionOutput::ShowCodecs {
+                    card_name,
+                    device_address,
+                } => {
+                    let _ = sender.output(DefaultDevicesOutput::ShowCodecs {
+                        card_name,
+                        device_address,
+                    });
+                }
                 VolumeSectionOutput::HasDeviceChanged(has) => {
                     self.has_output = has;
                     let _ = sender.output(DefaultDevicesOutput::HasDeviceChanged(
@@ -94,6 +103,15 @@ impl SimpleComponent for DefaultDevices {
             DefaultDevicesInput::InputSection(output) => match output {
                 VolumeSectionOutput::ShowDevices => {
                     let _ = sender.output(DefaultDevicesOutput::ShowInputDevices);
+                }
+                VolumeSectionOutput::ShowCodecs {
+                    card_name,
+                    device_address,
+                } => {
+                    let _ = sender.output(DefaultDevicesOutput::ShowCodecs {
+                        card_name,
+                        device_address,
+                    });
                 }
                 VolumeSectionOutput::HasDeviceChanged(has) => {
                     self.has_input = has;

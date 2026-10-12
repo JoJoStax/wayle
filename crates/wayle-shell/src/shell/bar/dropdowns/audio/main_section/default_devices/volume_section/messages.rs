@@ -24,6 +24,7 @@ pub(crate) enum VolumeSectionInput {
     VolumeCommitted(f64),
     MuteClicked,
     ShowDevicesClicked,
+    ShowCodecsClicked,
 }
 
 #[derive(Debug)]
@@ -35,6 +36,10 @@ pub(crate) enum VolumeSectionCmd {
 #[derive(Debug)]
 pub(crate) enum VolumeSectionOutput {
     ShowDevices,
+    ShowCodecs {
+        card_name: Option<String>,
+        device_address: Option<String>,
+    },
     HasDeviceChanged(bool),
 }
 
@@ -70,6 +75,44 @@ impl ActiveDevice {
         match self {
             Self::Output(device) => helpers::extract_bluetooth_codec(&device.properties.get()),
             Self::Input(device) => helpers::extract_bluetooth_codec(&device.properties.get()),
+        }
+    }
+
+    pub fn card_name(&self) -> Option<String> {
+        match self {
+            Self::Output(device) => {
+                let props = device.properties.get();
+                props
+                    .get("device.name")
+                    .cloned()
+                    .or_else(|| props.get("alsa.card_name").cloned())
+            }
+            Self::Input(device) => {
+                let props = device.properties.get();
+                props
+                    .get("device.name")
+                    .cloned()
+                    .or_else(|| props.get("alsa.card_name").cloned())
+            }
+        }
+    }
+
+    pub fn bluetooth_address(&self) -> Option<String> {
+        match self {
+            Self::Output(device) => {
+                let props = device.properties.get();
+                props
+                    .get("api.bluez5.address")
+                    .or_else(|| props.get("device.string"))
+                    .cloned()
+            }
+            Self::Input(device) => {
+                let props = device.properties.get();
+                props
+                    .get("api.bluez5.address")
+                    .or_else(|| props.get("device.string"))
+                    .cloned()
+            }
         }
     }
 

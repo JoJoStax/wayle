@@ -18,5 +18,9 @@ pub(crate) enum DefaultDevicesInput {
 pub(crate) enum DefaultDevicesOutput {
     ShowOutputDevices,
     ShowInputDevices,
+    ShowCodecs {
+        card_name: Option<String>,
+        device_address: Option<String>,
+    },
     HasDeviceChanged(bool),
 }

@@ -19,4 +19,8 @@ pub(crate) enum MainSectionInput {
 pub(crate) enum MainSectionOutput {
     ShowOutputDevices,
     ShowInputDevices,
+    ShowCodecs {
+        card_name: Option<String>,
+        device_address: Option<String>,
+    },
 }

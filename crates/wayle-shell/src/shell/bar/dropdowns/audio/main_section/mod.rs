@@ -128,6 +128,15 @@ impl SimpleComponent for MainSection {
                 DefaultDevicesOutput::ShowInputDevices => {
                     let _ = sender.output(MainSectionOutput::ShowInputDevices);
                 }
+                DefaultDevicesOutput::ShowCodecs {
+                    card_name,
+                    device_address,
+                } => {
+                    let _ = sender.output(MainSectionOutput::ShowCodecs {
+                        card_name,
+                        device_address,
+                    });
+                }
                 DefaultDevicesOutput::HasDeviceChanged(has) => {
                     self.has_any_device = has;
                 }

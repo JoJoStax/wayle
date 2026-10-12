@@ -68,34 +68,58 @@ impl Component for VolumeSection {
                         set_label: &model.label(),
                     },
 
-                    gtk::Button {
-                        add_css_class: "audio-device-trigger-btn",
-                        set_cursor_from_name: Some("pointer"),
-                        set_halign: gtk::Align::Start,
-                        connect_clicked => VolumeSectionInput::ShowDevicesClicked,
+                    gtk::Box {
+                        set_orientation: gtk::Orientation::Horizontal,
+                        add_css_class: "audio-device-row",
+                        set_valign: gtk::Align::Center,
 
-                        gtk::Box {
-                            add_css_class: "audio-device-name",
+                        gtk::Button {
+                            add_css_class: "audio-device-trigger-btn",
+                            set_cursor_from_name: Some("pointer"),
+                            set_halign: gtk::Align::Start,
+                            set_hexpand: false,
+                            connect_clicked => VolumeSectionInput::ShowDevicesClicked,
+
+                            gtk::Box {
+                                add_css_class: "audio-device-name",
+                                set_valign: gtk::Align::Center,
+
+                                gtk::Label {
+                                    add_css_class: "audio-device-name-text",
+                                    set_ellipsize: gtk::pango::EllipsizeMode::End,
+                                    #[watch]
+                                    set_label: &model.device_name,
+                                },
+
+                                gtk::Image {
+                                    add_css_class: "audio-device-chevron",
+                                    set_icon_name: Some("ld-chevron-right-symbolic"),
+                                },
+                            },
+                        },
+
+                        gtk::Button {
+                            add_css_class: "audio-device-codec-btn",
+                            set_cursor_from_name: Some("pointer"),
                             set_valign: gtk::Align::Center,
+                            #[watch]
+                            set_visible: model.device_codec.is_some(),
+                            connect_clicked => VolumeSectionInput::ShowCodecsClicked,
 
-                            gtk::Label {
-                                add_css_class: "audio-device-name-text",
-                                set_ellipsize: gtk::pango::EllipsizeMode::End,
-                                #[watch]
-                                set_label: &model.device_name,
-                            },
+                            gtk::Box {
+                                set_orientation: gtk::Orientation::Horizontal,
+                                add_css_class: "audio-device-codec-content",
 
-                            gtk::Label {
-                                add_css_class: "audio-device-codec",
-                                #[watch]
-                                set_visible: model.device_codec.is_some(),
-                                #[watch]
-                                set_label: model.device_codec.as_deref().unwrap_or_default(),
-                            },
+                                gtk::Label {
+                                    add_css_class: "audio-device-codec",
+                                    #[watch]
+                                    set_label: model.device_codec.as_deref().unwrap_or_default(),
+                                },
 
-                            gtk::Image {
-                                add_css_class: "audio-device-chevron",
-                                set_icon_name: Some("ld-chevron-right-symbolic"),
+                                gtk::Image {
+                                    add_css_class: "audio-device-codec-chevron",
+                                    set_icon_name: Some("ld-chevron-right-symbolic"),
+                                },
                             },
                         },
                     },
@@ -236,6 +260,14 @@ impl Component for VolumeSection {
             }
             VolumeSectionInput::ShowDevicesClicked => {
                 let _ = sender.output(VolumeSectionOutput::ShowDevices);
+            }
+            VolumeSectionInput::ShowCodecsClicked => {
+                let card_name = self.device.as_ref().and_then(|d| d.card_name());
+                let device_address = self.device.as_ref().and_then(|d| d.bluetooth_address());
+                let _ = sender.output(VolumeSectionOutput::ShowCodecs {
+                    card_name,
+                    device_address,
+                });
             }
         }
     }

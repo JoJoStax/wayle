@@ -194,6 +194,182 @@ pub(crate) fn extract_bluetooth_codec(props: &HashMap<String, String>) -> Option
         .map(|codec| format_bluetooth_codec(codec))
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub(crate) struct BluetoothCodecOption {
+    pub profile_name: String,
+    pub codec_name: String,
+    pub description: String,
+    pub is_active: bool,
+}
+
+/// Parses a pactl card profile name and description into a clean (codec_name, cleaned_description) pair.
+pub(crate) fn parse_bluetooth_codec_profile(prof_name: &str, desc: &str) -> (String, String) {
+    if let Some(idx) = desc.to_ascii_lowercase().find("codec ") {
+        let after_codec = &desc[idx + 6..];
+        let raw_codec = after_codec.split(')').next().unwrap_or(after_codec).trim();
+        let formatted = format_bluetooth_codec(raw_codec);
+
+        let before = desc[..idx].trim_end();
+        let before_cleaned = before.strip_suffix(',').unwrap_or(before).trim_end();
+        let after_paren = match after_codec.find(')') {
+            Some(p) => &after_codec[p..], // includes ')'
+            None => "",
+        };
+        let mut cleaned_desc = format!("{before_cleaned}{after_paren}").trim().to_string();
+        if cleaned_desc.ends_with("()") {
+            cleaned_desc.truncate(cleaned_desc.len() - 2);
+            cleaned_desc = cleaned_desc.trim().to_string();
+        }
+        return (formatted, cleaned_desc);
+    }
+
+    let codec = if prof_name.contains("sbc_xq") || prof_name.contains("sbc-xq") {
+        "SBC-XQ".to_string()
+    } else if prof_name.contains("sbc") {
+        "SBC".to_string()
+    } else if prof_name.contains("aac") {
+        "AAC".to_string()
+    } else if prof_name.contains("ldac") {
+        "LDAC".to_string()
+    } else if prof_name.contains("aptx_hd") || prof_name.contains("aptx-hd") {
+        "aptX HD".to_string()
+    } else if prof_name.contains("aptx") {
+        "aptX".to_string()
+    } else if prof_name.contains("cvsd") {
+        "CVSD".to_string()
+    } else if prof_name.contains("msbc") {
+        "mSBC".to_string()
+    } else if prof_name.contains("lc3") {
+        "LC3".to_string()
+    } else if prof_name.contains("opus") {
+        "Opus".to_string()
+    } else {
+        String::new()
+    };
+
+    (codec, desc.to_string())
+}
+
+/// Fetches available bluetooth codec profiles for a given card name or device address via `pactl -f json list cards`.
+pub(crate) fn fetch_bluetooth_codecs(
+    card_name: Option<&str>,
+    device_address: Option<&str>,
+) -> Vec<BluetoothCodecOption> {
+    let output = match std::process::Command::new("pactl")
+        .args(["-f", "json", "list", "cards"])
+        .output()
+    {
+        Ok(out) if out.status.success() => out.stdout,
+        _ => return Vec::new(),
+    };
+
+    let cards: serde_json::Value = match serde_json::from_slice(&output) {
+        Ok(v) => v,
+        Err(_) => return Vec::new(),
+    };
+
+    let cards_array = match cards.as_array() {
+        Some(arr) => arr,
+        None => return Vec::new(),
+    };
+
+    for card in cards_array {
+        let name = card.get("name").and_then(|n| n.as_str()).unwrap_or_default();
+        if !name.starts_with("bluez_card") {
+            continue;
+        }
+
+        let matches_card = card_name.is_some_and(|cn| cn == name);
+        let matches_addr = device_address.is_some_and(|addr| {
+            card.get("properties")
+                .and_then(|p| p.get("api.bluez5.address"))
+                .and_then(|a| a.as_str())
+                .is_some_and(|a| a.eq_ignore_ascii_case(addr))
+                || name
+                    .strip_prefix("bluez_card.")
+                    .map(|s| s.replace('_', ":"))
+                    .is_some_and(|s| s.eq_ignore_ascii_case(addr))
+        });
+
+        if (card_name.is_some() || device_address.is_some()) && !matches_card && !matches_addr {
+            continue;
+        }
+
+        let active_profile = card
+            .get("active_profile")
+            .and_then(|p| p.as_str())
+            .unwrap_or_default();
+
+        let profiles = match card.get("profiles").and_then(|p| p.as_object()) {
+            Some(p) => p,
+            None => continue,
+        };
+
+        let mut codec_options = Vec::new();
+
+        for (prof_name, prof_info) in profiles {
+            if prof_name == "off" || prof_name == "pro-audio" {
+                continue;
+            }
+            let is_available = prof_info
+                .get("available")
+                .and_then(|a| a.as_bool())
+                .unwrap_or(true);
+            if !is_available {
+                continue;
+            }
+
+            let raw_desc = prof_info
+                .get("description")
+                .and_then(|d| d.as_str())
+                .unwrap_or(prof_name.as_str());
+
+            let (codec_name, desc) = parse_bluetooth_codec_profile(prof_name, raw_desc);
+            if codec_name.is_empty() {
+                continue;
+            }
+
+            codec_options.push(BluetoothCodecOption {
+                profile_name: prof_name.clone(),
+                codec_name,
+                description: desc,
+                is_active: prof_name == active_profile,
+            });
+        }
+
+        if !codec_options.is_empty() {
+            // Sort by priority/display: A2DP codecs first, then HFP/HSP, or alphabetical
+            codec_options.sort_by(|a, b| {
+                let a_is_a2dp = a.profile_name.starts_with("a2dp");
+                let b_is_a2dp = b.profile_name.starts_with("a2dp");
+                match (a_is_a2dp, b_is_a2dp) {
+                    (true, false) => std::cmp::Ordering::Less,
+                    (false, true) => std::cmp::Ordering::Greater,
+                    _ => a.codec_name.cmp(&b.codec_name),
+                }
+            });
+            return codec_options;
+        }
+    }
+
+    Vec::new()
+}
+
+/// Sets the bluetooth card profile to switch audio codecs via `pactl set-card-profile`.
+pub(crate) fn set_bluetooth_codec(card_name: &str, profile_name: &str) -> Result<(), String> {
+    let output = std::process::Command::new("pactl")
+        .args(["set-card-profile", card_name, profile_name])
+        .output()
+        .map_err(|e| format!("Failed to execute pactl: {e}"))?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        let err = String::from_utf8_lossy(&output.stderr);
+        Err(format!("pactl set-card-profile failed: {err}"))
+    }
+}
+
 /// Finds the active audio codec for a Bluetooth device by matching its address or object path
 /// against the PulseAudio/PipeWire sink or source properties.
 pub(crate) fn find_bluetooth_device_codec(
@@ -499,4 +675,36 @@ mod tests {
         let empty = HashMap::new();
         assert_eq!(extract_bluetooth_codec(&empty), None);
     }
+
+    #[test]
+    fn parse_bluetooth_codec_profiles() {
+        let (codec, desc) = parse_bluetooth_codec_profile(
+            "a2dp-sink",
+            "High Fidelity Playback (A2DP Sink, codec LDAC)",
+        );
+        assert_eq!(codec, "LDAC");
+        assert_eq!(desc, "High Fidelity Playback (A2DP Sink)");
+
+        let (codec, desc) = parse_bluetooth_codec_profile(
+            "a2dp-sink-aac",
+            "High Fidelity Playback (A2DP Sink, codec AAC)",
+        );
+        assert_eq!(codec, "AAC");
+        assert_eq!(desc, "High Fidelity Playback (A2DP Sink)");
+
+        let (codec, desc) = parse_bluetooth_codec_profile(
+            "a2dp-sink-sbc_xq",
+            "High Fidelity Playback (A2DP Sink, codec SBC-XQ)",
+        );
+        assert_eq!(codec, "SBC-XQ");
+        assert_eq!(desc, "High Fidelity Playback (A2DP Sink)");
+
+        let (codec, desc) = parse_bluetooth_codec_profile(
+            "headset-head-unit",
+            "Headset Head Unit (HSP/HFP, codec MSBC)",
+        );
+        assert_eq!(codec, "MSBC");
+        assert_eq!(desc, "Headset Head Unit (HSP/HFP)");
+    }
 }
+

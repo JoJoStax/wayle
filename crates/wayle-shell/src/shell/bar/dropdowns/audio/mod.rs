@@ -1,3 +1,4 @@
+mod codec_picker;
 mod device_picker;
 mod factory;
 pub(crate) mod helpers;
@@ -12,6 +13,7 @@ use wayle_widgets::prelude::*;
 pub(super) use self::factory::Factory;
 pub(crate) use self::main_section::default_devices::volume_section::VolumeSectionKind;
 use self::{
+    codec_picker::{CodecPicker, CodecPickerInit, CodecPickerInput, CodecPickerOutput},
     device_picker::{DevicePicker, DevicePickerInit, DevicePickerOutput},
     main_section::{MainSection, MainSectionInit, MainSectionOutput},
     messages::{AudioDropdownCmd, AudioDropdownInit, AudioDropdownMsg},
@@ -26,6 +28,7 @@ pub(super) enum AudioPage {
     Main,
     OutputDevices,
     InputDevices,
+    Codecs,
 }
 
 impl AudioPage {
@@ -34,6 +37,7 @@ impl AudioPage {
             Self::Main => "main",
             Self::OutputDevices => "output",
             Self::InputDevices => "input",
+            Self::Codecs => "codecs",
         }
     }
 }
@@ -45,6 +49,7 @@ pub(crate) struct AudioDropdown {
     main_section: Controller<MainSection>,
     output_picker: Controller<DevicePicker>,
     input_picker: Controller<DevicePicker>,
+    codec_picker: Controller<CodecPicker>,
 }
 
 #[relm4::component(pub(crate))]
@@ -95,6 +100,9 @@ impl Component for AudioDropdown {
                     #[local_ref]
                     add_named[Some("input")] = input_picker_widget -> gtk::Box {},
 
+                    #[local_ref]
+                    add_named[Some("codecs")] = codec_picker_widget -> gtk::Box {},
+
                     #[watch]
                     set_visible_child_name: model.active_page.name(),
                 },
@@ -130,6 +138,12 @@ impl Component for AudioDropdown {
             })
             .forward(sender.input_sender(), AudioDropdownMsg::InputPicker);
 
+        let codec_picker = CodecPicker::builder()
+            .launch(CodecPickerInit {
+                title: t!("dropdown-audio-codecs"),
+            })
+            .forward(sender.input_sender(), AudioDropdownMsg::CodecPicker);
+
         let scale = init.config.config().styling.scale.get().value();
         watchers::spawn(&sender, &init.config);
 
@@ -140,11 +154,13 @@ impl Component for AudioDropdown {
             main_section,
             output_picker,
             input_picker,
+            codec_picker,
         };
 
         let main_section_widget = model.main_section.widget();
         let output_picker_widget = model.output_picker.widget();
         let input_picker_widget = model.input_picker.widget();
+        let codec_picker_widget = model.codec_picker.widget();
         let widgets = view_output!();
 
         ComponentParts { model, widgets }
@@ -159,9 +175,20 @@ impl Component for AudioDropdown {
                 MainSectionOutput::ShowInputDevices => {
                     self.active_page = AudioPage::InputDevices;
                 }
+                MainSectionOutput::ShowCodecs {
+                    card_name,
+                    device_address,
+                } => {
+                    self.codec_picker.emit(CodecPickerInput::ShowForCard {
+                        card_name,
+                        device_address,
+                    });
+                    self.active_page = AudioPage::Codecs;
+                }
             },
             AudioDropdownMsg::OutputPicker(DevicePickerOutput::NavigateBack)
-            | AudioDropdownMsg::InputPicker(DevicePickerOutput::NavigateBack) => {
+            | AudioDropdownMsg::InputPicker(DevicePickerOutput::NavigateBack)
+            | AudioDropdownMsg::CodecPicker(CodecPickerOutput::NavigateBack) => {
                 self.active_page = AudioPage::Main;
             }
         }
